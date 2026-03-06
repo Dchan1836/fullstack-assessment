@@ -16,3 +16,8 @@
 - Adding in a section in product details that displays similar products. I could use a similarity search algorithm to get this. 
 - Keep track of products the user has looked at in the last day, week or month and display it in a tab or viewing carousel at the bottom.
 - Group the search categories based on similar stuff like batteries, gaming equipment, fitness, etc. so that it is easier for the user to select categories quicker. 
+- Localization to change the language and general trend preferences based on the region of the user.
+- Adding technoloogies like Tailwind or styled components for more efficient styling.
+- Adding in the ability for the user to favorite items which tells the site that they really like or are activily looking for this type of product so the site can serve them more of the same type of product. 
+- Adding in the ability for the user to create shopping lists for different uses or occations. the name of the list and the products in the list can provide information to the site to serve similar products to the user. 
+- Prompt the user if they are ok with cross site tracking and if the user allows it gather more relevant data on them. 
