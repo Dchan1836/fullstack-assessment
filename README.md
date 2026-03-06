@@ -21,3 +21,6 @@
 - Adding in the ability for the user to favorite items which tells the site that they really like or are activily looking for this type of product so the site can serve them more of the same type of product. 
 - Adding in the ability for the user to create shopping lists for different uses or occations. the name of the list and the products in the list can provide information to the site to serve similar products to the user. 
 - Prompt the user if they are ok with cross site tracking and if the user allows it gather more relevant data on them. 
+- Implementing more reusable components.
+- Using higher order components to pull out common functionality that can be applied to multiple components.
+- Put product images in a carousel for more screen space efficiency. 
