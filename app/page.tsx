@@ -25,10 +25,10 @@ import Image from "next/image";
 
 interface Product {
   stacklineSku: string;
-  title: string;
-  categoryName: string;
-  subCategoryName: string;
-  imageUrls: string[];
+  title?: string;
+  categoryName?: string;
+  subCategoryName?: string;
+  imageUrls?: string[];
 }
 
 export default function Home() {
@@ -43,6 +43,9 @@ export default function Home() {
     string | undefined
   >(undefined);
   const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [totalProducts, setTotalProducts] = useState(0);
+  const pageSize = 20;
 
   useEffect(() => {
     fetch("/api/categories")
@@ -67,15 +70,17 @@ export default function Home() {
     if (search) params.append("search", search);
     if (selectedCategory) params.append("category", selectedCategory);
     if (selectedSubCategory) params.append("subCategory", selectedSubCategory);
-    params.append("limit", "20");
+    params.append("limit", pageSize.toString());
+    params.append("offset", (page * pageSize).toString());
 
     fetch(`/api/products?${params}`)
       .then((res) => res.json())
       .then((data) => {
         setProducts(data.products);
+        setTotalProducts(data.total ?? data.products.length);
         setLoading(false);
       });
-  }, [search, selectedCategory, selectedSubCategory]);
+  }, [search, selectedCategory, selectedSubCategory, page]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -89,14 +94,20 @@ export default function Home() {
               <Input
                 placeholder="Search products..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(0);
+                }}
                 className="pl-10"
               />
             </div>
 
             <Select
-              value={selectedCategory}
-              onValueChange={(value) => setSelectedCategory(value || undefined)}
+              value={selectedCategory ?? ""}
+              onValueChange={(value) => {
+                setSelectedCategory(value || undefined);
+                setPage(0);
+              }}
             >
               <SelectTrigger className="w-full md:w-[200px]">
                 <SelectValue placeholder="All Categories" />
@@ -112,10 +123,11 @@ export default function Home() {
 
             {selectedCategory && subCategories.length > 0 && (
               <Select
-                value={selectedSubCategory}
-                onValueChange={(value) =>
-                  setSelectedSubCategory(value || undefined)
-                }
+                value={selectedSubCategory ?? ""}
+                onValueChange={(value) => {
+                  setSelectedSubCategory(value || undefined);
+                  setPage(0);
+                }}
               >
                 <SelectTrigger className="w-full md:w-[200px]">
                   <SelectValue placeholder="All Subcategories" />
@@ -137,6 +149,7 @@ export default function Home() {
                   setSearch("");
                   setSelectedCategory(undefined);
                   setSelectedSubCategory(undefined);
+                  setPage(0);
                 }}
               >
                 Clear Filters
@@ -157,13 +170,31 @@ export default function Home() {
           </div>
         ) : (
           <>
+            <div className="flex items-center justify-between mt-6">
+              <Button
+                variant="outline"
+                disabled={page === 0 || loading}
+                onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+              >
+                Previous
+              </Button>
+
+              <Button
+                variant="outline"
+                disabled={(page + 1) * pageSize >= totalProducts || loading}
+                onClick={() => setPage((prev) => prev + 1)}
+              >
+                Next
+              </Button>
+            </div>
             <p className="text-sm text-muted-foreground mb-4">
-              Showing {products.length} products
+              Showing {page * pageSize + 1}–
+              {page * pageSize + products.length} of {totalProducts} products
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {products.map((product) => (
+              {products.map((product, index) => (
                 <Link
-                  key={product.stacklineSku}
+                  key={product.stacklineSku ?? `product-${index}`}
                   href={{
                     pathname: "/product",
                     query: { product: JSON.stringify(product) },
@@ -172,10 +203,10 @@ export default function Home() {
                   <Card className="h-full hover:shadow-lg transition-shadow cursor-pointer">
                     <CardHeader className="p-0">
                       <div className="relative h-48 w-full overflow-hidden rounded-t-lg bg-muted">
-                        {product.imageUrls[0] && (
+                        {product.imageUrls?.[0] && (
                           <Image
                             src={product.imageUrls[0]}
-                            alt={product.title}
+                            alt={product.title ?? ""}
                             fill
                             className="object-contain p-4"
                             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -185,15 +216,19 @@ export default function Home() {
                     </CardHeader>
                     <CardContent className="pt-4">
                       <CardTitle className="text-base line-clamp-2 mb-2">
-                        {product.title}
+                        {product.title ?? "Untitled"}
                       </CardTitle>
                       <CardDescription className="flex gap-2 flex-wrap">
-                        <Badge variant="secondary">
-                          {product.categoryName}
-                        </Badge>
-                        <Badge variant="outline">
-                          {product.subCategoryName}
-                        </Badge>
+                        {product.categoryName != null && product.categoryName !== "" && (
+                          <Badge variant="secondary">
+                            {product.categoryName}
+                          </Badge>
+                        )}
+                        {product.subCategoryName != null && product.subCategoryName !== "" && (
+                          <Badge variant="outline">
+                            {product.subCategoryName}
+                          </Badge>
+                        )}
                       </CardDescription>
                     </CardContent>
                     <CardFooter>
@@ -204,6 +239,27 @@ export default function Home() {
                   </Card>
                 </Link>
               ))}
+            </div>
+            <div className="flex items-center justify-between mt-6">
+              <Button
+                variant="outline"
+                disabled={page === 0 || loading}
+                onClick={() => setPage((prev) => Math.max(0, prev - 1))}
+              >
+                Previous
+              </Button>
+
+              <p className="text-sm text-muted-foreground">
+                Page {page + 1} of {Math.max(1, Math.ceil(totalProducts / pageSize))}
+              </p>
+
+              <Button
+                variant="outline"
+                disabled={(page + 1) * pageSize >= totalProducts || loading}
+                onClick={() => setPage((prev) => prev + 1)}
+              >
+                Next
+              </Button>
             </div>
           </>
         )}
